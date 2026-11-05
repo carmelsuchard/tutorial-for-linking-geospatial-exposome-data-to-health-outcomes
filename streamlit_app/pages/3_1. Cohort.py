@@ -51,7 +51,7 @@ st.markdown(
             <h3>👥 Study population</h3>
             <p>Analysis begins with a study population. Individuals may be recruited for a specific study or selected from a dataset of population health data.
             <br><br>
-            Studies are often designed to follow a cohort over time so that changes in health can be linked to environmental exposures. <p>
+            Studies are often designed to follow a cohort over time so that changes in health can be linked to changing environmental exposures. <p>
         </div>
         <div class="iriscc-card">
             <h3>📍 Spatial information</h3>
@@ -188,8 +188,7 @@ st.markdown(
 st.markdown(
     """
     <div class="iriscc-body">
-        To start your analysis, you can either use a sample cohort dataset or upload your own.
-        Choose the option that best suits your needs. Then, use the buttons below to load and visualize the cohort data on a map.
+        To start your analysis, you can either use a sample cohort dataset or upload your own. Then, use the buttons below to load and visualize the cohort data on a map.
      </div>
     """,
     unsafe_allow_html=True,
@@ -239,12 +238,12 @@ else:
     st.markdown(
         """
         <div class="iriscc-body">
-            The sample cohort is a synthetic dataset of 100 subjects called <i>cardiovascularCohort</i>.
-            Researchers have calculated the participants' risk of developing cardiovascular diseases (CVDs) based on health and genetic factors measured in 2023.
+            The sample cohort is a synthetic dataset of 1000 subjects called <i>cardiovascularCohort</i>.
+            Researchers have calculated the participants' risk of developing cardiovascular diseases (CVDs) based on health and genetic factors measured in 2023. They normalized this risk, calling it the <i>Cardiovascular_Score</i>, and saved it in the dataset. The score is a number between 0 and 1, where higher values indicate a higher risk of developing CVDs.
             They already know that the risk of CVDs is influenced by environmental exposures [<a href="https://www.sciencedirect.com/science/article/pii/S0021915025001200">3</a>].
             After using this demonstrator, the researchers will be able to map the pattern of exposures across different locations, and relate it to increased risk of CVDs.
             <br><br>
-            The subjects live in five European cities: Amsterdam, Athens, Barcelona, Paris, and Zurich. A geocoding service has already been used to convert their street addresses into geographic coordinates (latitude and longitude). The data has been saved in a GeoPackage file.
+            The subjects were recruited from around the municipality of Utrecht, in the Netherlands. A geocoding service has already been used to convert their street addresses into geographic coordinates (latitude and longitude). The data has been saved in a GeoPackage file.
             <br><br>
             </div>
         """,

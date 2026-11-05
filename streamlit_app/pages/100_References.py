@@ -14,9 +14,6 @@ st.markdown(
 
 [3] Daiber, A., Rajagopalan, S., Kuntic, M., & Münzel, T. (2025). Cardiovascular risk posed by the exposome. Atherosclerosis, 405, 119222. https://doi.org/10.1016/j.atherosclerosis.2025.119222
 
-[4] Dyer, Georgia M. C., et al. “The Use of Single and Multiple Pollutant Models in Health Impact Assessment of Air Pollution: What Difference Does It Make and Where?” Environment International, vol. 213, July 2026, p. 110338. DOI.org (Crossref), https://doi.org/10.1016/j.envint.2026.110338.
-
-[5] Heatwaves - a Brief Introduction | Copernicus. https://climate.copernicus.eu/heatwaves-brief-introduction. Accessed 1 Sept. 2026.
 """
 )
 

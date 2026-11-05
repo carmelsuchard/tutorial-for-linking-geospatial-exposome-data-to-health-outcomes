@@ -1,3 +1,4 @@
+import base64
 from pathlib import Path
 
 import streamlit as st
@@ -10,20 +11,33 @@ st.set_page_config(page_title="IRISCC Demonstrator", layout="wide")
 apply_app_style()
 
 
-col1, col2 = st.columns([3, 1])
+col1, col2 = st.columns(2)
 with col1:
-    iriscc_logo_path = BASE_DIR / "Resources" / "iriscc_logo.png"
-    st.image(iriscc_logo_path)
-
+    image_path = BASE_DIR / "Resources" / "ihen_logo.png"
+    image_data = base64.b64encode(image_path.read_bytes()).decode("utf-8")
+    st.markdown(
+        f'<img src="data:image/png;base64,{image_data}" width="620">',
+        unsafe_allow_html=True,
+    )
 with col2:
-    iras_logo_path = BASE_DIR / "Resources" / "iras_logo.png"
-    st.image(iras_logo_path)
+    image_path = BASE_DIR / "Resources" / "iras_logo.png"
+    image_data = base64.b64encode(image_path.read_bytes()).decode("utf-8")
+    st.markdown(
+        f'<img src="data:image/png;base64,{image_data}" width="620">',
+        unsafe_allow_html=True,
+    )
 
+# Streamlit small space buffer
+st.markdown(
+    """
+    """,
+    unsafe_allow_html=True,
+)
 
 st.markdown(
     """
     <div class="iriscc-page-header">
-        <h2 class="iriscc-page-title">Risk to Human Health in Urban Areas during Heatwaves Associated with Deteriorated Air Quality</h2>
+        <h2 class="iriscc-page-title">Tutorial for Linking Geospatial Exposome Data to Health Outcomes</h2>
 
     </div>
     """,

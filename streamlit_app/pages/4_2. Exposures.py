@@ -17,7 +17,7 @@ apply_app_style()
 st.markdown(
     """
     <div class="iriscc-page-header">
-        <h2 class="iriscc-page-title">Step 2 — Select air quality and weather data</h2>
+        <h2 class="iriscc-page-title">Step 2 — Select exposure variables</h2>
     </div>
     """,
     unsafe_allow_html=True,
@@ -34,10 +34,9 @@ st.markdown(
     <div class="iriscc-grid">
         <div class="iriscc-card">
             <h3>🔠 Types of exposures</h3>
-            <p>This demonstrator focuses on two main types of exposure variables: air quality and temperature data.
-            <br><br>
-            In the field of exposomics, exposure variables are environmental factors that individuals or populations are exposed to, which can have an impact on their health.
-            These variables can be physical (e.g., temperature, noise), chemical (e.g., air pollutants, pesticides), related to the built environment (e.g. greenspaces, walkability), and more.
+            <p> In the field of exposomics, exposure variables are environmental factors that individuals or populations are exposed to, which can have an impact on their health. 
+            These variables can be physical (e.g., temperature, noise), chemical (e.g., air pollutants, pesticides), related to the built environment (e.g. greenspaces, walkability), and more. </p>
+            <p>This demonstrator focuses on two main types of exposure variables: air quality and the built environment.
             </div>
         <div class="iriscc-card">
             <h3>📏 Estimating exposure</h3>
@@ -48,7 +47,7 @@ st.markdown(
         <div class="iriscc-card">
             <h3>🗂️ Data sources</h3>
             <p>There are many data catalogues on the internet where you can find datasets of modeled exposure variables. In this demonstrator, we'll use datasets created in the <a href=\"https://expanseproject.eu/">Expanse Project</a>.
-            All of the datasets created in this project are available in a <a href=\"https://exposome.uu.nl/">data catalogue</a> so other researchers can access them for their own studies.</p>
+            All of the datasets created in this project are available in a <a href=\"https://exposome.uu.nl/">Exposome Maps catalogue</a> so other researchers can access them for their own studies.</p>
         </div>
     </div>
     """,
@@ -66,18 +65,16 @@ st.markdown(
 )
 
 st.markdown(
-    "<div class='iriscc-section-title'><strong>Choose your exposure variables</strong></div>",
+    "<div class='iriscc-section-title'><strong>Your choice</strong></div>",
     unsafe_allow_html=True,
 )
 
 st.markdown(
     """
     <div class="iriscc-body">
-        Studies show that combining exposures can help reduce double-counting in health impact assessments and support more useful burden estimates for policy-makers [<a href=\"https://www.sciencedirect.com/science/article/pii/S0160412026002965?via%3Dihub">4</a>].
         Use the selection cards below to select the exposure variables you want to link to your cohort. You can select multiple exposures, but up to 100 variables or times in total.
         <br><br>
-        Watch out! Different variables are available at differnet temporal and spatial resolutions, which will affect your subsequent analysis.
-        Think about your research question and the available data when making your selections. Do you want to compare exposures across years, or do you want to focus on a specific year? Do you want to look at daily temperature variations, or are you more interested in long-term trends?
+        Watch out! Different variables are available at differnet temporal and spatial resolutions, which will affect your subsequent analysis. Think about your research question and the available data when making your selections.
         <br><br>
       </div>
     """,
@@ -281,10 +278,10 @@ def variable_selection_to_raster_list(variable_selection_dict):
 pollutant_options = ["Annual PM10", "Annual PM2.5", "Annual O3", "Annual NO2"]
 
 weather_options = [
-    "Annual mean temperature",
-    "Daily mean temperature",
-    "Daily maximum temperature",
-    "Daily minimum temperature",
+    "Mean NDVI within 300m buffer",
+    "Walkability index within 300m buffer",
+    "Imperviousness index within 300m buffer",
+    "Distance to nearest blue space",
 ]
 
 variable_metadata = {
@@ -336,54 +333,54 @@ variable_metadata = {
         "thumbnail": "Resources/thumbnails/no2.png",
         "geoserver_name": "NO2B25_AAV",
     },
-    "Annual mean temperature": {
-        "spatial_resolution": "1x1km",
-        "pixel_size": 1000,
+    "Mean NDVI within 300m buffer": {
+        "spatial_resolution": "250x250m",
+        "pixel_size": 250,
         "temporal_mode": "yearly",
         "start_time": "2020",
-        "end_time": "2024",
-        "time_period": "2020-2024",
-        "unit": "°C",
-        "description": "Modeled yearly average tempeature",
-        "thumbnail": "Resources/thumbnails/yearly_avg_temp.png",
-        "geoserver_name": "TMP_AVG_YEARLY",
+        "end_time": "2020",
+        "time_period": "2020-2020",
+        "unit": "NDVI",
+        "description": "Modeled mean NDVI within 300m buffer, a measure of vegetation density and health",
+        "thumbnail": "Resources/thumbnails/mean_ndvi.png",
+        "geoserver_name": "NDV_ME3",
     },
-    "Daily mean temperature": {
-        "spatial_resolution": "1x1km",
-        "pixel_size": 1000,
-        "temporal_mode": "daily",
-        "start_time": "2020-01-01",
-        "end_time": "2024-12-31",
-        "time_period": "June, July, August 2020-2024",
-        "unit": "°C",
-        "description": "Modeled daily average temperature",
-        "thumbnail": "Resources/thumbnails/daily_average_temperature.png",
-        "geoserver_name": "TMP_AVG_DAILY",
+    "Walkability index within 300m buffer": {
+        "spatial_resolution": "100x100m",
+        "pixel_size": 100,
+        "temporal_mode": "yearly",
+        "start_time": "2020",
+        "end_time": "2020",
+        "time_period": "2020-2020",
+        "unit": "Walkability index",
+        "description": "Modeled walkability index within 300m buffer",
+        "thumbnail": "Resources/thumbnails/walkability.png",
+        "geoserver_name": "WAL_B03",
     },
-    "Daily maximum temperature": {
-        "spatial_resolution": "1x1km",
-        "pixel_size": 1000,
-        "temporal_mode": "daily",
-        "start_time": "2020-01-01",
-        "end_time": "2024-12-31",
-        "time_period": "June, July, August 2020-2024",
-        "unit": "°C",
-        "description": "Modeled daily maximum temperature",
-        "thumbnail": "Resources/thumbnails/daily_maximum_temperature.png",
-        "geoserver_name": "TMP_MAX_DAILY",
+    "Imperviousness index within 300m buffer": {
+        "spatial_resolution": "100x100m",
+        "pixel_size": 100,
+        "temporal_mode": "yearly",
+        "start_time": "2006",
+        "end_time": "2018",
+        "time_period": "2006-2018",
+        "unit": "Imperviousness index",
+        "description": "Modeled imperviousness index within 300m buffer",
+        "thumbnail": "Resources/thumbnails/imperviousness.png",
+        "geoserver_name": "IMP_B03",
     },
-    "Daily minimum temperature": {
-        "spatial_resolution": "1x1km",
-        "pixel_size": 1000,
-        "temporal_mode": "daily",
-        "start_time": "2020-01-01",
-        "end_time": "2024-12-31",
-        "time_period": "June, July, August 2020-2024",
-        "unit": "°C",
-        "description": "Modeled daily minimum temperature",
-        "thumbnail": "Resources/thumbnails/daily_minimum_temperature.png",
-        "geoserver_name": "TMP_MIN_DAILY",
-    },
+    "Distance to nearest blue space": {
+        "spatial_resolution": "100x100m",
+        "pixel_size": 100,
+        "temporal_mode": "yearly",
+        "start_time": "2013",
+        "end_time": "2013",
+        "time_period": "2013-2013",
+        "unit": "m",
+        "description": "Distance to the nearest blue space (water body)",
+        "thumbnail": "Resources/thumbnails/nearest_blue.png",
+        "geoserver_name": "	BSW_DIS",
+    }
 }
 
 
@@ -463,16 +460,6 @@ def render_variable_card(name, state_key, selected):
                     and end_time is not None
                     and start_time <= end_time
                 )
-                timeframe_type = st.radio(
-                    "Timeframe type",
-                    ["Single year", "Year range"],
-                    index=0 if record.get("timeframe_type") != "year_range" else 1,
-                    horizontal=True,
-                    key=f"{state_key}_{slugify(name)}_timeframe",
-                )
-                record["timeframe_type"] = (
-                    "single_year" if timeframe_type == "Single year" else "year_range"
-                )
 
                 if not valid_timeframe:
                     st.warning(
@@ -482,6 +469,27 @@ def render_variable_card(name, state_key, selected):
                     available_years = [
                         str(year) for year in range(start_time, end_time + 1)
                     ]
+                    if len(available_years) > 1:
+                        timeframe_type = st.radio(
+                            "Timeframe type",
+                            ["Single year", "Year range"],
+                            index=(
+                                0
+                                if record.get("timeframe_type") != "year_range"
+                                else 1
+                            ),
+                            horizontal=True,
+                            key=f"{state_key}_{slugify(name)}_timeframe",
+                        )
+                        record["timeframe_type"] = (
+                            "single_year"
+                            if timeframe_type == "Single year"
+                            else "year_range"
+                        )
+                    else:
+                        record["timeframe_type"] = "single_year"
+                        record["start_year"] = ""
+                        record["end_year"] = ""
 
                     if record["timeframe_type"] == "single_year":
                         selected_year = record.get("single_year", "")
@@ -646,7 +654,7 @@ with air_quality_col:
         )
 
 with weather_col:
-    st.subheader("Weather datasets")
+    st.subheader("Built environment datasets")
     for name in weather_options:
         render_variable_card(
             name, "weather_selection", name in st.session_state["weather_selection"]
