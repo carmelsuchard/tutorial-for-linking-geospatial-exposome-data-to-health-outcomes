@@ -220,14 +220,14 @@ if st.session_state["data_source"] == "upload":
             Please ensure that your file is in a supported geospatial format (GeoPackage, GeoJSON, or ZIP containing a shapefile).
             Make sure that there is a geometry column, and a column with a unique identifier for each subject (e.g., SubjectID). There can be up to 2000 points in the uploaded dataset.
             <br><br>
-            The demonstrator currently only supports European locations. If your dataset contains points outside Europe, they'll be dropped.
+            The tutorial currently only supports European locations. If your dataset contains points outside Europe, they'll be dropped.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     st.warning(
-        "Warning! This is an unsecure demonstrator. When uploading real addresses, never upload real health data. Instead, upload a table with just addresses and a pseudo code and link the returned results to your health data on your local work environment. In addition, add dummy addresses to your data so addresses that belong to study participants are not recognizable. Alternatively, use synthetic data or anonymized datasets, and make sure to comply with your local data protection regulations."
+        "Warning! This is an unsecure tutorial. When uploading real addresses, never upload real health data. Instead, upload a table with just addresses and a pseudo code and link the returned results to your health data on your local work environment. In addition, add dummy addresses to your data so addresses that belong to study participants are not recognizable. Alternatively, use synthetic data or anonymized datasets, and make sure to comply with your local data protection regulations."
     )
     uploaded_file = st.file_uploader(
         "Upload cohort file",
@@ -238,10 +238,12 @@ else:
     st.markdown(
         """
         <div class="iriscc-body">
-            The sample cohort is a synthetic dataset of 1000 subjects called <i>cardiovascularCohort</i>.
-            Researchers have calculated the participants' risk of developing cardiovascular diseases (CVDs) based on health and genetic factors measured in 2023. They normalized this risk, calling it the <i>Cardiovascular_Score</i>, and saved it in the dataset. The score is a number between 0 and 1, where higher values indicate a higher risk of developing CVDs.
-            They already know that the risk of CVDs is influenced by environmental exposures [<a href="https://www.sciencedirect.com/science/article/pii/S0021915025001200">3</a>].
-            After using this demonstrator, the researchers will be able to map the pattern of exposures across different locations, and relate it to increased risk of CVDs.
+            The sample cohort is a synthetic dataset of 711 subjects called <i>utrechtCardiovascularCohort</i>.
+            Based on survey responses, health history, and a few measurements in the lab, the researchers have calculated the participants' risk of having or developing cardiovascular diseases (CVDs). They normalized this risk, calling it the <i>Cardiovascular_Score</i>, and saved it in the dataset. The score is a number between 0 and 1, where higher values indicate a higher risk (they probably already have been diagnosed with a CVD), and lower values indicate a lower risk (they are likely healthy). 
+            They also collected demographic and socio-economic data.
+            <br><br>
+            The researchers already know that the risk of CVDs is influenced by environmental exposures [<a href="https://www.sciencedirect.com/science/article/pii/S0021915025001200">1</a>], but they want to explore how the risk of CVDs is related to air quality and the built environment.
+            After following this tutorial, they'll will be able to see the pattern of exposures that suggest causality.
             <br><br>
             The subjects were recruited from around the municipality of Utrecht, in the Netherlands. A geocoding service has already been used to convert their street addresses into geographic coordinates (latitude and longitude). The data has been saved in a GeoPackage file.
             <br><br>
@@ -259,7 +261,7 @@ col_load, col_vis = st.columns([1, 1])
 with col_load:
     if st.button("Load cohort"):
         if st.session_state.get("data_source") == "sample":
-            path = BASE_DIR / "Resources" / "cardiovascularCohort.gpkg"
+            path = BASE_DIR / "Resources" / "utrecht_cohort.gpkg"
             if not path.exists():
                 st.error("Sample dataset not found in Resources.")
             else:
@@ -273,7 +275,7 @@ with col_load:
                     st.download_button(
                         "Download CSV",
                         data=csv,
-                        file_name="cardiovascularCohort.csv",
+                        file_name="utrecht_cohort.csv",
                         mime="text/csv",
                     )
                 except Exception:
@@ -281,7 +283,7 @@ with col_load:
 
             st.session_state["location_gdf"] = gdf
             st.session_state["loaded_source"] = "sample"
-            st.session_state["uploaded_file_name"] = "cardiovascularCohort"
+            st.session_state["uploaded_file_name"] = "utrecht_cohort.gpkg"
 
             st.success(f"Loaded sample cohort ({len(gdf)} records)")
 
@@ -346,12 +348,6 @@ if "show_map" not in st.session_state:
 if "show_all_locations" not in st.session_state:
     st.session_state["show_all_locations"] = True
 
-if "map_center" not in st.session_state:
-    st.session_state["map_center"] = [52.3676, 4.9041]  # Amsterdam
-
-if "map_zoom" not in st.session_state:
-    st.session_state["map_zoom"] = 11
-
 # -----------------------------------------------------------------------------
 # Map section
 # -----------------------------------------------------------------------------
@@ -373,47 +369,20 @@ if st.session_state["show_map"]:
         if st.button("All subjects"):
             st.session_state["show_all_locations"] = True
             st.rerun()
-        # Only show preset city zoom buttons for the bundled sample dataset
-        if st.session_state.get("data_source") == "sample":
-            city_locations = {
-                "Amsterdam": ([52.3676, 4.9041], 11),
-                "Paris": ([48.8566, 2.3522], 11),
-                "Barcelona": ([41.3851, 2.1734], 11),
-                "Zurich": ([47.3769, 8.5417], 11),
-                "Athens": ([37.9838, 23.7275], 11),
-            }
-
-            for city, (coords, zoom) in city_locations.items():
-                if st.button(city):
-                    st.session_state["show_all_locations"] = False
-                    st.session_state["map_center"] = coords
-                    st.session_state["map_zoom"] = zoom
-                    st.rerun()
-
     # -------------------------------------------------------------------------
     # Map
     # -------------------------------------------------------------------------
     with col_map:
-        if st.session_state["show_all_locations"]:
-            m = folium.Map(
-                tiles='https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            )
+        m = folium.Map(
+            tiles='https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        )
 
-            bounds = [
-                [location_gdf.geometry.y.min(), location_gdf.geometry.x.min()],
-                [location_gdf.geometry.y.max(), location_gdf.geometry.x.max()],
-            ]
-
-            m.fit_bounds(bounds, padding=(30, 30))
-
-        else:
-            m = folium.Map(
-                location=st.session_state["map_center"],
-                zoom_start=st.session_state["map_zoom"],
-                tiles='https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            )
+        bounds = [
+            [location_gdf.geometry.y.min(), location_gdf.geometry.x.min()],
+            [location_gdf.geometry.y.max(), location_gdf.geometry.x.max()],
+        ]
+        m.fit_bounds(bounds, padding=(30, 30))
 
         # ---------------------------------------------------------------------
         # Add points

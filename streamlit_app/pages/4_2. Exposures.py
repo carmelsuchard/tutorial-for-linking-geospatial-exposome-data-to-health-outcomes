@@ -36,7 +36,7 @@ st.markdown(
             <h3>🔠 Types of exposures</h3>
             <p> In the field of exposomics, exposure variables are environmental factors that individuals or populations are exposed to, which can have an impact on their health. 
             These variables can be physical (e.g., temperature, noise), chemical (e.g., air pollutants, pesticides), related to the built environment (e.g. greenspaces, walkability), and more. </p>
-            <p>This demonstrator focuses on two main types of exposure variables: air quality and the built environment.
+            <p>This tutorial focuses on two main types of exposure variables: air quality and the built environment.
             </div>
         <div class="iriscc-card">
             <h3>📏 Estimating exposure</h3>
@@ -46,7 +46,7 @@ st.markdown(
         </div>
         <div class="iriscc-card">
             <h3>🗂️ Data sources</h3>
-            <p>There are many data catalogues on the internet where you can find datasets of modeled exposure variables. In this demonstrator, we'll use datasets created in the <a href=\"https://expanseproject.eu/">Expanse Project</a>.
+            <p>There are many data catalogues on the internet where you can find datasets of modeled exposure variables. In this tutorial, we'll use datasets created in the <a href=\"https://expanseproject.eu/">Expanse Project</a>.
             All of the datasets created in this project are available in a <a href=\"https://exposome.uu.nl/">Exposome Maps catalogue</a> so other researchers can access them for their own studies.</p>
         </div>
     </div>
@@ -684,12 +684,12 @@ with summary_col_a:
 
 with summary_col_b:
     with st.container(border=True):
-        st.markdown("**Weather**")
+        st.markdown("**Built environment**")
         if st.session_state["weather_selection"]:
             for name, record in st.session_state["weather_selection"].items():
                 st.write(f"{name}  \n_{format_timeframe_summary(record)}_")
         else:
-            st.caption("No weather variables selected yet")
+            st.caption("No built environment variables selected yet")
 
 
 raster_list = variable_selection_to_raster_list(

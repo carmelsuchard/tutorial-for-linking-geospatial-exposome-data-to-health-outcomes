@@ -8,11 +8,7 @@ st.title("References")
 
 st.markdown(
     """
-[1] Combined effects of air pollution and heat exposure in Europe: time for action. (2023). In www.eea.europa.eu. https://www.eea.europa.eu/en/newsroom/editorial/combined-effects-of-air-pollution-and-heat-exposure
-
-[2] ESMH. “A Scientist’s Opinion: Interview with Prof. Roel Vermeulen on Extreme Weather and the Impact on Our Health - ESMH.” European Science-Media Hub, 15 July 2026, https://sciencemediahub.eu/2026/07/15/a-scientists-opinion-interview-with-prof-dr-roel-vermeulen-on-extreme-weather-and-the-impact-on-our-health/.
-
-[3] Daiber, A., Rajagopalan, S., Kuntic, M., & Münzel, T. (2025). Cardiovascular risk posed by the exposome. Atherosclerosis, 405, 119222. https://doi.org/10.1016/j.atherosclerosis.2025.119222
+[1] Daiber, A., Rajagopalan, S., Kuntic, M., & Münzel, T. (2025). Cardiovascular risk posed by the exposome. Atherosclerosis, 405, 119222. https://doi.org/10.1016/j.atherosclerosis.2025.119222
 
 """
 )
