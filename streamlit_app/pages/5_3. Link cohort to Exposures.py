@@ -94,10 +94,18 @@ def get_data():
 def convert_for_download(df):
     if df is None:
         return b""
-    # If geodataframe, drop geometry column and convert to pandas dataframe
+
     if isinstance(df, gpd.GeoDataFrame):
-        df = df.drop(columns="geometry").copy()
-    return df.to_csv(index=False).encode("utf-8")
+        download_df = df.drop(columns="geometry").copy()
+        coordinates = df.to_crs("EPSG:4326").geometry
+        if "longitude" not in download_df.columns:
+            download_df["longitude"] = coordinates.x
+        if "latitude" not in download_df.columns:
+            download_df["latitude"] = coordinates.y
+    else:
+        download_df = df.copy()
+
+    return download_df.to_csv(index=False).encode("utf-8")
 
 
 if run:

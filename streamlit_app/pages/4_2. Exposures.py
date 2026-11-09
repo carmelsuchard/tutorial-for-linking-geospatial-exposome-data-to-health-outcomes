@@ -46,9 +46,10 @@ st.markdown(
         </div>
         <div class="iriscc-card">
             <h3>🗂️ Data sources</h3>
-            <p>There are many data catalogues on the internet where you can find datasets of modeled exposure variables. In this tutorial, we'll use datasets created in the <a href=\"https://expanseproject.eu/">Expanse Project</a>.
-            All of the datasets created in this project are available in a <a href=\"https://exposome.uu.nl/">Exposome Maps catalogue</a> so other researchers can access them for their own studies.</p>
-        </div>
+            <p>There are many data catalogues on the internet where you can find datasets of modeled exposure variables. In this tutorial, we'll use datasets created in the EXPANSE Project.
+            All of the datasets are available in a <a href=\"https://exposome.uu.nl/">Exposome Maps catalogue</a> so other researchers can access them for their own studies.</p>
+            <p>Want to use the data outside of this tutorial? You can submit a data request from the catalogue.</p>
+         </div>
     </div>
     """,
     unsafe_allow_html=True,

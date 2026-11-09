@@ -240,7 +240,8 @@ else:
         <div class="iriscc-body">
             The sample cohort is a synthetic dataset of 711 subjects called <i>utrechtCardiovascularCohort</i>.
             Based on survey responses, health history, and a few measurements in the lab, the researchers have calculated the participants' risk of having or developing cardiovascular diseases (CVDs). They normalized this risk, calling it the <i>Cardiovascular_Score</i>, and saved it in the dataset. The score is a number between 0 and 1, where higher values indicate a higher risk (they probably already have been diagnosed with a CVD), and lower values indicate a lower risk (they are likely healthy). 
-            They also collected demographic and socio-economic data.
+            They also calculated a <i>frailty_index</i>, which is a measure of overall health status and predicts adverse outcomes including mortality, disability, and cognitive decline.
+            Finally, they captured demographic and socio-economic data.
             <br><br>
             The researchers already know that the risk of CVDs is influenced by environmental exposures [<a href="https://www.sciencedirect.com/science/article/pii/S0021915025001200">1</a>], but they want to explore how the risk of CVDs is related to air quality and the built environment.
             After following this tutorial, they'll will be able to see the pattern of exposures that suggest causality.
@@ -261,7 +262,7 @@ col_load, col_vis = st.columns([1, 1])
 with col_load:
     if st.button("Load cohort"):
         if st.session_state.get("data_source") == "sample":
-            path = BASE_DIR / "Resources" / "utrecht_cohort.gpkg"
+            path = BASE_DIR / "Resources" / "utrechtCardiovascularCohort.gpkg"
             if not path.exists():
                 st.error("Sample dataset not found in Resources.")
             else:
@@ -275,7 +276,7 @@ with col_load:
                     st.download_button(
                         "Download CSV",
                         data=csv,
-                        file_name="utrecht_cohort.csv",
+                        file_name="utrechtCardiovascularCohort.csv",
                         mime="text/csv",
                     )
                 except Exception:
@@ -283,7 +284,7 @@ with col_load:
 
             st.session_state["location_gdf"] = gdf
             st.session_state["loaded_source"] = "sample"
-            st.session_state["uploaded_file_name"] = "utrecht_cohort.gpkg"
+            st.session_state["uploaded_file_name"] = "utrechtCardiovascularCohort.gpkg"
 
             st.success(f"Loaded sample cohort ({len(gdf)} records)")
 
@@ -345,9 +346,6 @@ with col_vis:
 if "show_map" not in st.session_state:
     st.session_state["show_map"] = False
 
-if "show_all_locations" not in st.session_state:
-    st.session_state["show_all_locations"] = True
-
 # -----------------------------------------------------------------------------
 # Map section
 # -----------------------------------------------------------------------------
@@ -358,45 +356,31 @@ if st.session_state["show_map"]:
     if location_gdf.crs != "EPSG:4326":
         location_gdf = location_gdf.to_crs(4326)
 
-    col_map, col_controls = st.columns([4, 1])
+    m = folium.Map(
+        tiles='https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        zoom_control=True,
+    )
+
+    bounds = [
+        [location_gdf.geometry.y.min(), location_gdf.geometry.x.min()],
+        [location_gdf.geometry.y.max(), location_gdf.geometry.x.max()],
+    ]
+    m.fit_bounds(bounds, padding=(30, 30))
 
     # -------------------------------------------------------------------------
-    # Controls
+    # Add points
     # -------------------------------------------------------------------------
-    with col_controls:
-        st.subheader("Zoom to")
+    for _, row in location_gdf.iterrows():
+        if row.geometry is None:
+            continue
 
-        if st.button("All subjects"):
-            st.session_state["show_all_locations"] = True
-            st.rerun()
-    # -------------------------------------------------------------------------
-    # Map
-    # -------------------------------------------------------------------------
-    with col_map:
-        m = folium.Map(
-            tiles='https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        )
+        folium.CircleMarker(
+            location=[row.geometry.y, row.geometry.x],
+            radius=4,
+            fill=True,
+            fill_opacity=0.8,
+            popup=str(row.get("Cardiovascular_Score", "")),
+        ).add_to(m)
 
-        bounds = [
-            [location_gdf.geometry.y.min(), location_gdf.geometry.x.min()],
-            [location_gdf.geometry.y.max(), location_gdf.geometry.x.max()],
-        ]
-        m.fit_bounds(bounds, padding=(30, 30))
-
-        # ---------------------------------------------------------------------
-        # Add points
-        # ---------------------------------------------------------------------
-        for _, row in location_gdf.iterrows():
-            if row.geometry is None:
-                continue
-
-            folium.CircleMarker(
-                location=[row.geometry.y, row.geometry.x],
-                radius=4,
-                fill=True,
-                fill_opacity=0.8,
-                popup=str(row.get("Cardiovascular_Score", "")),
-            ).add_to(m)
-
-        st_folium(m, width="100%", height=700, returned_objects=[])
+    st_folium(m, width="100%", height=700, returned_objects=[])

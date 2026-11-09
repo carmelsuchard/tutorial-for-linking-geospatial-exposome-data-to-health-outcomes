@@ -55,7 +55,7 @@ st.markdown(
         Understanding how environmental exposures relate to health outcomes requires combining exposure data with data from study populations.
         This tutorial provides a general workflow for linking geospatial exposure datasets to cohort data based on location and time.
         <br><br>
-        The resulting linked data can be used to explore relationships between exposures and health outcomes. This is a common step in an exposure assessment studies, which aims to find the patterns of exposure to environmental factors. Epidemiologists and public health researchers can use this data to identify causal factors and propose mitigation strategies.
+        The resulting linked data can be used to explore relationships between exposures and health outcomes. This is a common step in exposure assessment studies, which aim to find the patterns of exposure to environmental factors. Environmental epidemiologists and other public health researchers can use this data to identify causal factors and propose mitigation strategies.
         <br><br>
     </div>
     """,

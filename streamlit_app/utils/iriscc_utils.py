@@ -193,6 +193,12 @@ def apply_app_style():
             gap: 1rem;
             margin: 1.3rem 0 0.4rem 0;
         }
+        .iriscc-grid2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+            margin: 1.3rem 0 0.4rem 0;
+        }
 
         .iriscc-card {
             border-radius: 18px;
