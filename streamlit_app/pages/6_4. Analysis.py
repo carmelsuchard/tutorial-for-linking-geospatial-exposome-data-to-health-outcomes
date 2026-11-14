@@ -202,6 +202,7 @@ def render_correlation_heatmap(dataframe):
         value_name="correlation",
     )
     heatmap_data = heatmap_data.dropna(subset=["correlation"])
+    heatmap_width = max(800, 120 * len(columns))
     heatmap = alt.Chart(heatmap_data).mark_rect().encode(
         x=alt.X(
             "column:N",
@@ -241,10 +242,10 @@ def render_correlation_heatmap(dataframe):
     )
     chart = (heatmap + labels).properties(
         title="Correlation of numeric variables",
-        width="container",
+        width=heatmap_width,
         height=max(400, min(800, 45 * len(columns))),
     )
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, use_container_width=False)
 
 
 render_correlation_heatmap(linked_df)
