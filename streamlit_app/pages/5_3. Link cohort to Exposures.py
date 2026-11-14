@@ -288,7 +288,7 @@ with code_expander:
                 if pixel_size <= 0:
                     raise ValueError("Raster pixel_size must be a positive number.")
 
-                output_column = f"{variable_name}_{timestamp}"
+                output_column = f"{variable_name}_{timestamp}".replace(".", "_")
                 wms_timestamp = _format_wms_time(timestamp)
 
                 points_in_wms_crs = points_dataframe.to_crs(TARGET_CRS)

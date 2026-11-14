@@ -3,6 +3,7 @@ from time import perf_counter
 
 import aiohttp
 import geopandas as gpd
+import pandas as pd
 
 WMS_URL = "https://exposome.uu.nl/geoserver/wms"
 WMS_WORKSPACE = "EXPANSE_map"
@@ -29,31 +30,31 @@ async def _fetch_gray_index(
     total_points,
 ):
     async with semaphore:
-        print(
-            f"[link_to_raster] Point {position + 1}/{total_points}: "
-            f"original index={original_index}"
-        )
-        print(f"[link_to_raster] Request parameters: {params}")
+        # print(
+        #     f"[link_to_raster] Point {position + 1}/{total_points}: "
+        #     f"original index={original_index}"
+        # )
+        # print(f"[link_to_raster] Request parameters: {params}")
         request_start = perf_counter()
         try:
             async with session.get(WMS_URL, params=params) as response:
-                print(
-                    f"[link_to_raster] Response for point {position + 1}: "
-                    f"status={response.status}, "
-                    f"content-type={response.headers.get('Content-Type')}, "
-                    f"elapsed={perf_counter() - request_start:.3f}s"
-                )
+                # print(
+                #     f"[link_to_raster] Response for point {position + 1}: "
+                #     f"status={response.status}, "
+                #     f"content-type={response.headers.get('Content-Type')}, "
+                #     f"elapsed={perf_counter() - request_start:.3f}s"
+                # )
                 response.raise_for_status()
                 data = await response.json(content_type=None)
                 features = data.get("features", [])
-                print(f"[link_to_raster] Features returned: {len(features)}")
+                # print(f"[link_to_raster] Features returned: {len(features)}")
                 if features:
                     properties = features[0].get("properties", {})
-                    print(f"[link_to_raster] Properties: {properties}")
+                    # print(f"[link_to_raster] Properties: {properties}")
                     value = properties.get("GRAY_INDEX")
-                    print(
-                        f"[link_to_raster] Gray Index for point {position + 1}: {value}"
-                    )
+                    # print(
+                    #     f"[link_to_raster] Gray Index for point {position + 1}: {value}"
+                    # )
                     return position, value, None
                 print(f"[link_to_raster] No feature returned for point {position + 1}.")
                 return position, None, None
@@ -104,6 +105,14 @@ async def _fetch_raster_values(requests_to_make, output_column, progress_callbac
     return values, failures
 
 
+def _clean_linked_columns(dataframe, columns):
+    """Normalize linked exposure values and remove invalid raster values."""
+    for column in columns:
+        values = pd.to_numeric(dataframe[column], errors="coerce")
+        values = values.replace([float("inf"), float("-inf")], pd.NA)
+        dataframe[column] = values.mask(values < -1).round(4)
+
+
 def link_to_raster(selected_variable_dict, points_dataframe, progress_callback=None, return_failures=False):
     total_start = perf_counter()
     validation_start = perf_counter()
@@ -140,17 +149,17 @@ def link_to_raster(selected_variable_dict, points_dataframe, progress_callback=N
     if pixel_size <= 0:
         raise ValueError("Raster pixel_size must be a positive number.")
 
-    output_column = f"{variable_name}_{timestamp}"
+    output_column = f"{variable_name}_{timestamp}".replace(".", "_")
     wms_timestamp = _format_wms_time(timestamp)
-    print(
-        f"[link_to_raster] Raster: variable={variable_name}, "
-        f"GeoServer name={geoserver_name}, time={timestamp}, pixel size={pixel_size}"
-    )
+    # print(
+    #     f"[link_to_raster] Raster: variable={variable_name}, "
+    #     f"GeoServer name={geoserver_name}, time={timestamp}, pixel size={pixel_size}"
+    # )
     points_in_wms_crs = points_dataframe.to_crs(TARGET_CRS)
     layer_name = f"{WMS_WORKSPACE}:{geoserver_name}"
     values = [None] * len(points_dataframe)
     failures = []
-    print(f"Timing: validation = {perf_counter() - validation_start:.3f}s")
+    # print(f"Timing: validation = {perf_counter() - validation_start:.3f}s")
 
     requests_to_make = []
     for point_index, point in enumerate(points_in_wms_crs.geometry):
@@ -177,27 +186,28 @@ def link_to_raster(selected_variable_dict, points_dataframe, progress_callback=N
         requests_to_make.append((points_dataframe.index[point_index], params))
 
     if len(requests_to_make) > MAX_REQUESTS:
-        print(
-            f"[link_to_raster] Limiting requests from {len(requests_to_make)} "
-            f"to {MAX_REQUESTS}."
-        )
+        # print(
+        #     f"[link_to_raster] Limiting requests from {len(requests_to_make)} "
+        #     f"to {MAX_REQUESTS}."
+        # )
         requests_to_make = requests_to_make[:MAX_REQUESTS]
-    print(
-        f"[link_to_raster] Sending {len(requests_to_make)} request(s) asynchronously "
-        f"with a maximum of {MAX_CONCURRENT_REQUESTS} concurrent request(s)."
-    )
+    # print(
+    #     f"[link_to_raster] Sending {len(requests_to_make)} request(s) asynchronously "
+    #     f"with a maximum of {MAX_CONCURRENT_REQUESTS} concurrent request(s)."
+    # )
     requested_values, request_failures = asyncio.run(
         _fetch_raster_values(requests_to_make, output_column, progress_callback)
     )
     values[: len(requested_values)] = requested_values
     failures.extend(request_failures)
 
-    print(
-        f"[link_to_raster] Finished requests: values={sum(value is not None for value in values)}, "
-        f"missing={sum(value is None for value in values)}, failures={len(failures)}"
-    )
+    # print(
+    #     f"[link_to_raster] Finished requests: values={sum(value is not None for value in values)}, "
+    #     f"missing={sum(value is None for value in values)}, failures={len(failures)}"
+    # )
     linked_points = points_dataframe.copy()
     linked_points[output_column] = values
+    _clean_linked_columns(linked_points, [output_column])
     print(f"Timing: total link_to_raster = {perf_counter() - total_start:.3f}s")
     if return_failures:
         return linked_points, failures
@@ -223,6 +233,7 @@ def create_linked_dataframe(
 
     output_columns = [
         f"{str(selection.get('variable', '')).strip()}_{str(selection.get('time', '')).strip()}"
+        .replace(".", "_")
         for selection in selected_variable_dict
     ]
     if any(
@@ -236,25 +247,25 @@ def create_linked_dataframe(
         raise ValueError("Each variable and timestamp combination must be unique.")
 
     total_start = perf_counter()
-    print(
-        f"[create_linked_dataframe] Starting link for {len(selected_variable_dict)} "
-        f"raster selection(s) and {len(points_dataframe)} point(s)."
-    )
-    print(f"[create_linked_dataframe] Output columns: {output_columns}")
+    # print(
+    #     f"[create_linked_dataframe] Starting link for {len(selected_variable_dict)} "
+    #     f"raster selection(s) and {len(points_dataframe)} point(s)."
+    # )
+    # print(f"[create_linked_dataframe] Output columns: {output_columns}")
     linked_gdf = points_dataframe.copy()
     failures = []
     for variable_dict in selected_variable_dict:
         variable_name = str(variable_dict["variable"]).strip()
         timestamp = str(variable_dict["time"]).strip()
-        output_column = f"{variable_name}_{timestamp}"
+        output_column = f"{variable_name}_{timestamp}".replace(".", "_")
         try:
-            print(
-                f"[create_linked_dataframe] Starting {output_column} "
-                f"({selected_variable_dict.index(variable_dict) + 1}/{len(selected_variable_dict)})."
-            )
+            # print(
+            #     f"[create_linked_dataframe] Starting {output_column} "
+            #     f"({selected_variable_dict.index(variable_dict) + 1}/{len(selected_variable_dict)})."
+            # )
             if progress_callback:
                 progress_callback("started", output_column)
-            print(f"Extracting values from raster: {variable_dict['geoserver_name']}")
+            # print(f"Extracting values from raster: {variable_dict['geoserver_name']}")
             extracted_values, tile_failures = link_to_raster(
                 variable_dict,
                 linked_gdf,
@@ -263,10 +274,10 @@ def create_linked_dataframe(
             )
             linked_gdf[output_column] = extracted_values[output_column]
             failures.extend(tile_failures)
-            print(
-                f"[create_linked_dataframe] Completed {output_column}; "
-                f"failures so far={len(failures)}."
-            )
+            # print(
+            #     f"[create_linked_dataframe] Completed {output_column}; "
+            #     f"failures so far={len(failures)}."
+            # )
             if progress_callback:
                 progress_callback("completed", output_column)
         except Exception as error:
@@ -287,6 +298,7 @@ def create_linked_dataframe(
         f"[create_linked_dataframe] Finished. Shape={linked_gdf.shape}, "
         f"total failures={len(failures)}."
     )
+    _clean_linked_columns(linked_gdf, output_columns)
     if return_failures:
         return linked_gdf, failures
     return linked_gdf

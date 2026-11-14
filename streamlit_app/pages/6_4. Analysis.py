@@ -34,7 +34,7 @@ st.markdown(
 st.markdown(
     """
     <div class="iriscc-body">
-        Start by visualizing the spatial distribution of the exposure values linked to your cohort. You can create a map that shows the locations of the cohort members and color-code them based on their exposure values. This will help you identify any spatial patterns or clusters in the data.
+        Start by visualizing the spatial distribution of the exposure values linked to your cohort. You can make a map that shows the locations of the cohort members, color-coded by their exposure values. This will help you identify any spatial patterns or clusters in the data.
         <br><br>
       </div>
     """,
@@ -62,7 +62,9 @@ if not isinstance(linked_df, gpd.GeoDataFrame) or linked_df.empty:
     st.stop()
 
 selected_columns = [
-    f"{selection.get('variable', '').strip()}_{selection.get('time', '').strip()}"
+    f"{selection.get('variable', '').strip()}_{selection.get('time', '').strip()}".replace(
+        ".", "_"
+    )
     for selection in raster_list
     if isinstance(selection, dict)
 ]
@@ -150,6 +152,103 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+st.markdown(
+    """
+    <div class="iriscc-body">
+        Next, use plots like heatmaps and scatterplots to get an initial idea of the relationship between variables.
+      </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+def render_correlation_heatmap(dataframe):
+    """Render correlations as a native Altair chart."""
+    excluded_columns = [
+        column
+        for column in dataframe.columns
+        if column.lower() in {"geometry", "subjectid"}
+    ]
+    numeric_data = dataframe.drop(columns=excluded_columns).apply(
+        pd.to_numeric, errors="coerce"
+    )
+    usable_columns = [
+        column
+        for column in numeric_data.columns
+        if numeric_data[column].notna().sum() >= 2
+        and numeric_data[column].nunique(dropna=True) >= 2
+    ]
+
+    if len(usable_columns) < 2:
+        st.info(
+            "At least two numeric columns with two varying observations are needed "
+            "for a correlation heatmap."
+        )
+        return
+
+    correlation_matrix = numeric_data[usable_columns].corr(min_periods=2)
+    correlation_matrix = correlation_matrix.dropna(axis=0, how="all").dropna(
+        axis=1, how="all"
+    )
+    if correlation_matrix.empty:
+        st.info("No pairwise correlations could be calculated from the linked data.")
+        return
+
+    columns = correlation_matrix.columns.tolist()
+    heatmap_data = correlation_matrix.rename_axis("row").reset_index().melt(
+        id_vars="row",
+        var_name="column",
+        value_name="correlation",
+    )
+    heatmap_data = heatmap_data.dropna(subset=["correlation"])
+    heatmap = alt.Chart(heatmap_data).mark_rect().encode(
+        x=alt.X(
+            "column:N",
+            sort=columns,
+            title=None,
+            axis=alt.Axis(
+                labelAngle=-45,
+                labelAlign="right",
+                labelLimit=500,
+                labelOverlap=False,
+            ),
+        ),
+        y=alt.Y(
+            "row:N",
+            sort=columns,
+            title=None,
+            axis=alt.Axis(labelLimit=500, labelOverlap=False),
+        ),
+        color=alt.Color(
+            "correlation:Q",
+            title="Correlation",
+            scale=alt.Scale(domain=[-1, 1], scheme="redblue", reverse=True),
+        ),
+        tooltip=[
+            alt.Tooltip("row:N", title="Variable"),
+            alt.Tooltip("column:N", title="Variable"),
+            alt.Tooltip("correlation:Q", title="Correlation", format=".2f"),
+        ],
+    )
+    labels = heatmap.mark_text().encode(
+        text=alt.Text("correlation:Q", format=".2f"),
+        color=alt.condition(
+            "abs(datum.correlation) > 0.5",
+            alt.value("white"),
+            alt.value("black"),
+        ),
+    )
+    chart = (heatmap + labels).properties(
+        title="Correlation of numeric variables",
+        width="container",
+        height=max(400, min(800, 45 * len(columns))),
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+
+render_correlation_heatmap(linked_df)
+
 available_y_columns = [
     column
     for column in linked_df.columns
@@ -195,40 +294,49 @@ else:
             x_values = numeric_column(x_axis)
             x_type = "quantitative"
 
-        scatter_data = pd.DataFrame({x_axis: x_values, y_axis: y_values}).dropna()
+        # Use safe field names for Altair: exposure names such as "Annual PM2.5_2020"
+        # contain dots that Vega-Lite interprets as nested-field access.
+        x_field = "_scatter_x"
+        y_field = "_scatter_y"
+        scatter_data = pd.DataFrame(
+            {x_field: x_values, y_field: y_values}
+        ).dropna()
 
         if scatter_data.empty:
             st.warning("The selected columns do not contain a pair of numeric values to plot.")
         else:
-            y_min, y_max = scatter_data[y_axis].min(), scatter_data[y_axis].max()
+            y_min, y_max = scatter_data[y_field].min(), scatter_data[y_field].max()
             if y_min == y_max:
                 y_min, y_max = y_min - 0.5, y_max + 0.5
 
             if x_type == "quantitative":
-                x_min, x_max = scatter_data[x_axis].min(), scatter_data[x_axis].max()
+                x_min, x_max = scatter_data[x_field].min(), scatter_data[x_field].max()
                 if x_min == x_max:
                     x_min, x_max = x_min - 0.5, x_max + 0.5
                 x_encoding = alt.X(
-                    x_axis,
+                    x_field,
                     type=x_type,
                     scale=alt.Scale(domain=[x_min, x_max]),
                     axis=alt.Axis(format=axis_format(x_axis)),
+                    title=x_axis,
                 )
             else:
                 x_encoding = alt.X(
-                    x_axis,
+                    x_field,
                     type=x_type,
                     axis=alt.Axis(labelAngle=0),
+                    title=x_axis,
                 )
 
             x_tooltip = (
                 alt.Tooltip(
-                    x_axis,
+                    x_field,
                     type="quantitative",
                     format=axis_format(x_axis),
+                    title=x_axis,
                 )
                 if x_type == "quantitative"
-                else alt.Tooltip(x_axis, type="nominal")
+                else alt.Tooltip(x_field, type="nominal", title=x_axis)
             )
             scatterplot = (
                 alt.Chart(scatter_data)
@@ -236,60 +344,22 @@ else:
                 .encode(
                     x=x_encoding,
                     y=alt.Y(
-                        y_axis,
+                        y_field,
                         type="quantitative",
                         scale=alt.Scale(domain=[y_min, y_max]),
                         axis=alt.Axis(format=axis_format(y_axis)),
+                        title=y_axis,
                     ),
                     tooltip=[
                         x_tooltip,
                         alt.Tooltip(
-                            y_axis,
+                            y_field,
                             type="quantitative",
                             format=axis_format(y_axis),
+                            title=y_axis,
                         ),
                     ],
                 )
                 .properties(height=panel_height)
             )
             st.altair_chart(scatterplot, use_container_width=True)
-
-
-# st.markdown(
-#     "<div class='iriscc-section-title'><strong>Examples from literature</strong></div>",
-#     unsafe_allow_html=True,
-# )
-
-# st.markdown(
-#     """
-#     <div class="iriscc-grid2">
-#         <div class="iriscc-card">
-#             <h3>👥 Study population</h3>
-#             <p>Analysis begins with a study population. Individuals may be recruited for a specific study or selected from a dataset of population health data.
-#             <br><br>
-#             Studies are often designed to follow a cohort over time so that changes in health can be linked to changing environmental exposures. <p>
-#         </div>
-#         <div class="iriscc-card">
-#             <h3>📍 Spatial information</h3>
-#             <p>Each subject is defined by a unique Subject ID and some spatial information. Often it's their residential address, but it can also be their workplace, postcode, or a frequently travelled route.
-#             It all depends on the research question and available data. 
-#             <br><br>
-#             Most of the time, locations are first captured as addresses. They are converted to geographic coordinates (latitude and longitude) using either a geocoding service or the address registry of the country.
-#             Then, the coordinates are saved in a common geospatial data format such as a shapefile or GeoPackage.
-#             <p>
-#             </p>
-#         </div>
-#         <div class="iriscc-card">
-#             <h3>📊 Demographics and health </h3>
-#             <p>Subjects report demographic information and health status through surveys, or contribute measurement data from medical tests and wearable biosensors.</p>
-#         </div>
-#         <div class="iriscc-card">
-#             <h3>📊 Demographics and health </h3>
-#             <p> Baranyi, G., Harron, K., Shen, Y. et al. studied the relationship between <b> early life course air pollution exposure</b> and <b> general health in adolescence</b> in the UK.
-#             They linked air pollution exposure to buffers around postcode centroids over the life course of participants. Annual averages of PM2.5, PM10, and NO2
-#             were used to calculate mean exposures during different life stages, then compared to self-reported general health and hospital episodes. </p>
-#         </div>
-#     </div>
-#     """,
-#     unsafe_allow_html=True,
-# )
